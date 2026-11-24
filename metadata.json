@@ -1,0 +1,6 @@
+{
+  "name": "ToneCraft: Multi-Step Message Coach",
+  "description": "A two-step Gemini prompt-chaining workspace that diagnoses emotional subtext and crafts tailored, constructive message rewrites.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
