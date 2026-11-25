@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Check, Copy } from 'lucide-react';
 import type { RewriteOption } from '../types';
 
@@ -14,6 +15,7 @@ const STYLE_DESCRIPTORS: Record<string, string> = {
 };
 
 export function RewriteCards({ rewrites, isLoading }: RewriteCardsProps) {
+  const prefersReducedMotion = useReducedMotion();
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const handleCopy = async (text: string, index: number) => {
@@ -95,8 +97,15 @@ export function RewriteCards({ rewrites, isLoading }: RewriteCardsProps) {
         const descriptor = STYLE_DESCRIPTORS[item.style] ?? 'Tailored response';
 
         return (
-          <article
+          <motion.article
             key={item.style}
+            initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: 0.28,
+              delay: prefersReducedMotion ? 0 : idx * 0.06,
+              ease: [0.16, 1, 0.3, 1],
+            }}
             className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col gap-3.5"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -145,7 +154,7 @@ export function RewriteCards({ rewrites, isLoading }: RewriteCardsProps) {
                 {item.why_it_works}
               </p>
             </div>
-          </article>
+          </motion.article>
         );
       })}
     </section>

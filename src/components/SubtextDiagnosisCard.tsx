@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
+import { motion, useReducedMotion } from 'motion/react';
 import { AlertTriangle, Check, Copy, Eye, EyeOff } from 'lucide-react';
 import { AggressionHistoryChart } from './AggressionHistoryChart';
+import { analyzeReadability } from '../utils/readability';
 import type { AnalysisHistoryEntry, SubtextAnalysis } from '../types';
 
 interface SubtextDiagnosisCardProps {
@@ -46,9 +48,14 @@ export function SubtextDiagnosisCard({
   previousHistory,
   onClearHistory,
 }: SubtextDiagnosisCardProps) {
+  const prefersReducedMotion = useReducedMotion();
   const [showInlineScan, setShowInlineScan] = useState(false);
   const [copiedTarget, setCopiedTarget] = useState<'all' | 'goal' | 'triggers' | null>(null);
   const severity = getAggressionSeverity(analysis.aggression_score);
+  const readability = useMemo(
+    () => analyzeReadability(originalDraft),
+    [originalDraft]
+  );
 
   const copyText = async (text: string, target: 'all' | 'goal' | 'triggers') => {
     try {
@@ -74,14 +81,22 @@ export function SubtextDiagnosisCard({
       analysis.trigger_phrases.length > 0
         ? analysis.trigger_phrases.map((p) => `"${p}"`).join(', ')
         : 'None flagged';
-    return [
+    const lines = [
       'Emotional Subtext Analysis',
       `Detected Tone: ${analysis.detected_tone}`,
       `Aggression Score: ${analysis.aggression_score}/10 (${severity.label})`,
+    ];
+    if (readability) {
+      lines.push(
+        `Readability (Flesch-Kincaid): Grade ${readability.gradeLevel} · Ease ${readability.readingEase}/100 (${readability.styleLabel})`
+      );
+    }
+    lines.push(
       `Core Goal: ${analysis.core_goal}`,
-      `Trigger Phrases: ${triggersLine}`,
-    ].join('\n');
-  }, [analysis, severity.label]);
+      `Trigger Phrases: ${triggersLine}`
+    );
+    return lines.join('\n');
+  }, [analysis, severity.label, readability]);
 
   const highlightedParts = useMemo(() => {
     if (!showInlineScan || !originalDraft || analysis.trigger_phrases.length === 0) {
@@ -116,8 +131,11 @@ export function SubtextDiagnosisCard({
   }, [showInlineScan, originalDraft, analysis.trigger_phrases]);
 
   return (
-    <section
+    <motion.section
       aria-labelledby="subtext-diagnosis-heading"
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
       className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col gap-5"
     >
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-slate-100 pb-4">
@@ -216,6 +234,52 @@ export function SubtextDiagnosisCard({
         previousEntries={previousHistory}
         onClearHistory={onClearHistory}
       />
+
+      {/* Flesch-Kincaid Readability */}
+      {readability && (
+        <div className="pt-4 border-t border-slate-100 flex flex-col gap-2">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="text-xs font-medium text-slate-700">
+              Draft Readability (Flesch-Kincaid)
+            </span>
+            <span className="text-xs font-semibold text-slate-800">
+              {readability.styleLabel}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+            <span>
+              Grade Level{' '}
+              <strong className="font-mono font-semibold text-slate-900 tabular-nums">
+                {readability.gradeLevel.toFixed(1)}
+              </strong>
+            </span>
+            <span className="text-slate-300" aria-hidden="true">
+              ·
+            </span>
+            <span>
+              Reading Ease{' '}
+              <strong className="font-mono font-semibold text-slate-900 tabular-nums">
+                {readability.readingEase} / 100
+              </strong>
+            </span>
+            <span className="text-slate-300" aria-hidden="true">
+              ·
+            </span>
+            <span>
+              Avg{' '}
+              <strong className="font-mono font-semibold text-slate-900 tabular-nums">
+                {readability.avgWordsPerSentence}
+              </strong>{' '}
+              words / sentence
+            </span>
+          </div>
+
+          <p className="text-xs leading-relaxed text-slate-600">
+            {readability.tonePerceptionNote}
+          </p>
+        </div>
+      )}
 
       {/* Core Goal */}
       <div className="flex flex-col gap-1.5">
@@ -331,6 +395,6 @@ export function SubtextDiagnosisCard({
           </div>
         )}
       </div>
-    </section>
+    </motion.section>
   );
 }

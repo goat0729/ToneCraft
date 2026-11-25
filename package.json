@@ -1,7 +1,8 @@
 {
-  "name": "react-example",
+  "name": "tonecraft-message-coach",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A two-step Gemini prompt-chaining workspace that diagnoses emotional subtext and crafts tailored, constructive message rewrites.",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
